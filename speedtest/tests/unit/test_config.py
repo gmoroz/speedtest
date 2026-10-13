@@ -1,29 +1,42 @@
-"""Юнит-тесты Settings."""
+"""Юнит-тесты конфигурации."""
 
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from speedtest.config import Settings
-from speedtest.const import DEFAULT_DB_PATH
 
 
-def test_settings_defaults_debug_true_uses_default_db_path() -> None:
-    """По умолчанию debug=True и дефолтный путь БД."""
+def test_settings_defaults_without_env_file_return_expected_values() -> None:
+    """Без env-файла настройки содержат значения по умолчанию."""
     loaded = Settings(_env_file=None)
 
-    assert loaded.debug is True
-    assert loaded.db_path == DEFAULT_DB_PATH
+    assert loaded.request_count == 10
+    assert loaded.timeout_seconds == 30.0
 
 
-def test_settings_production_default_db_path_raises() -> None:
-    """Prod-guard отклоняет дефолтный db_path."""
-    with pytest.raises(ValueError, match="db_path"):
-        Settings(_env_file=None, debug=False)
+def test_settings_ignore_env_example() -> None:
+    """Файл `.env.example` не влияет на настройки приложения."""
+    Path(".env.example").write_text("SPEEDTEST_REQUEST_COUNT=3\n", encoding="utf-8")
+
+    loaded = Settings()
+
+    assert loaded.request_count == 10
 
 
-def test_settings_production_explicit_db_path_accepted() -> None:
-    """В production явный db_path проходит."""
-    loaded = Settings(_env_file=None, debug=False, db_path=Path("/srv/app.sqlite3"))
+def test_settings_environment_variables_override_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Переменные SPEEDTEST_ переопределяют значения настроек."""
+    monkeypatch.setenv("SPEEDTEST_REQUEST_COUNT", "3")
+    monkeypatch.setenv("SPEEDTEST_TIMEOUT_SECONDS", "4.5")
 
-    assert loaded.db_path == Path("/srv/app.sqlite3")
+    loaded = Settings(_env_file=None)
+
+    assert loaded.request_count == 3
+    assert loaded.timeout_seconds == 4.5
+
+
+def test_settings_zero_timeout_raises_validation_error() -> None:
+    """Нулевой таймаут не проходит валидацию."""
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, timeout_seconds=0)

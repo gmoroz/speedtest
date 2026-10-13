@@ -1,10 +1,11 @@
-"""Фиксированные наборы значений - StrEnum."""
+"""Перечисление кода завершения командной строки."""
 
-from enum import StrEnum
+from enum import IntEnum
 
 
-class ItemStatus(StrEnum):
-    """Статус элемента списка."""
+class ExitCode(IntEnum):
+    """Коды завершения командной строки."""
 
-    NEW = "new"
-    DONE = "done"
+    OK = 0
+    ERROR = 1
+    INTERRUPTED = 130

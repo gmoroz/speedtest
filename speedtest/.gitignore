@@ -11,8 +11,6 @@ dist/
 .coverage
 htmlcov/
 coverage.xml
-data/
-*.sqlite3
 .idea/
 .vscode/
 .DS_Store

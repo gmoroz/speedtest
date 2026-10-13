@@ -1,9 +1,10 @@
 [project]
 name = "speedtest"
 version = "0.1.0"
-description = "Python CLI / pipeline"
+description = "Замер скорости загрузки: N последовательных запросов к URL, средние время и объём, МБ/с"
 requires-python = "==3.14.*"
 dependencies = [
+    "httpx==0.28.1",
     "pydantic==2.13.5",
     "pydantic-settings==2.15.0",
 ]
@@ -55,6 +56,7 @@ max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "ARG", "T201"]
+"tests/integration/test_cli.py" = ["S603"]
 "src/speedtest/cli.py" = ["T201"]
 "src/speedtest/__main__.py" = ["T201"]
 
@@ -80,7 +82,7 @@ paths = ["src", "vulture_whitelist.py"]
 pythonpath = ["."]
 testpaths = ["tests"]
 strict = true
-markers = ["integration: тесты с реальной sqlite БД"]
+markers = ["integration: тесты с реальным локальным HTTP-сервером"]
 # Единственный источник порога coverage - --cov-fail-under ниже.
 addopts = "--import-mode=importlib --cov=src --cov-branch --cov-report=term-missing --cov-fail-under=80 --disable-socket --allow-hosts=127.0.0.1,localhost --allow-unix-socket --timeout=30"
 timeout_method = "thread"
@@ -92,13 +94,20 @@ source = ["src"]
 
 [tool.importlinter]
 root_package = "speedtest"
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
-name = "Слои cli -> services -> repositories"
+name = "Слои cli -> services -> clients"
 type = "layers"
 containers = ["speedtest"]
 layers = [
     "cli",
     "services",
-    "repositories",
+    "clients",
 ]
+
+[[tool.importlinter.contracts]]
+name = "Сервис не импортирует httpx"
+type = "forbidden"
+source_modules = ["speedtest.services"]
+forbidden_modules = ["httpx"]

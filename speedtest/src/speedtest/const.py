@@ -1,16 +1,12 @@
 """Константы пакета. Только значения - без runtime-логики и настроек."""
 
-from pathlib import Path
+DEFAULT_REQUEST_COUNT = 10
+DEFAULT_TIMEOUT_SECONDS = 30.0
 
-DEFAULT_DB_PATH = Path("data") / "speedtest.sqlite3"
+# Десятичный мегабайт (SI): так скорость сопоставима с цифрами провайдеров и speedtest-сервисов.
+BYTES_PER_MEGABYTE = 1_000_000
 
-SCHEMA_STATEMENTS: tuple[str, ...] = (
-    """
-    CREATE TABLE IF NOT EXISTS items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        status TEXT NOT NULL,
-        created_at TEXT NOT NULL
-    )
-    """,
-)
+ALLOWED_URL_SCHEMES = frozenset({"http", "https"})
+
+# Часть CDN (например, Wikimedia) отклоняет запросы без осмысленного User-Agent.
+USER_AGENT = "speedtest-cli (+https://github.com/gmoroz/speedtest)"

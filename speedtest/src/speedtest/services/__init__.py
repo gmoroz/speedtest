@@ -1,5 +1,5 @@
-"""Слой бизнес-логики. Сервисы знают репозитории, но не транзакции."""
+"""Слой бизнес-логики замера."""
 
-from speedtest.services.items import ItemService
+from speedtest.services.speedtest import SpeedTestService
 
-__all__ = ["ItemService"]
+__all__ = ["SpeedTestService"]

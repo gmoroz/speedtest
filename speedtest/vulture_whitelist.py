@@ -1,6 +1,3 @@
-"""Whitelist ложных срабатываний vulture для pydantic/sqlite/enum."""
+"""Whitelist ложных срабатываний vulture."""
 
 model_config
-_guard_production
-row_factory
-DONE

@@ -1,32 +1,20 @@
-"""Конфигурация приложения. Единственный источник - синглтон `settings`."""
+"""Конфигурация приложения из окружения и файла `.env`."""
 
-from pathlib import Path
-
-from pydantic import model_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from speedtest.const import DEFAULT_DB_PATH
+from speedtest.const import DEFAULT_REQUEST_COUNT, DEFAULT_TIMEOUT_SECONDS
 
 
 class Settings(BaseSettings):
-    """Настройки из окружения/.env; os.environ по коду не читать."""
+    """Настройки из окружения и файлов `.env`."""
 
     model_config = SettingsConfigDict(
-        env_file=(".env.example", ".env"),
+        env_prefix="SPEEDTEST_",
+        env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
     )
 
-    debug: bool = True
-    db_path: Path = DEFAULT_DB_PATH
-
-    @model_validator(mode="after")
-    def _guard_production(self) -> Settings:
-        """В production путь БД должен быть задан явно."""
-        if not self.debug and self.db_path == DEFAULT_DB_PATH:
-            error = "В production (debug=False) db_path должен быть переопределён в .env."
-            raise ValueError(error)
-        return self
-
-
-settings = Settings()
+    request_count: int = DEFAULT_REQUEST_COUNT
+    timeout_seconds: float = Field(default=DEFAULT_TIMEOUT_SECONDS, gt=0)
