@@ -1,0 +1,7 @@
+# Changes here will be overwritten by Copier
+_commit: 649bd6f
+_src_path: git+file:///home/user/Documents/projects/scaffold-cubes
+instance: ''
+layer: python-cli
+pkg_name: speedtest
+python_cli_dir: speedtest
