@@ -1,0 +1,86 @@
+name: check
+
+on:
+  push:
+    # git init без init.defaultBranch создаёт master, а не main.
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  full-check:
+    name: full-check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    concurrency:
+      group: full-check-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      # Меньше incremental-артефактов в target. CI=true уже выставляет GitHub Actions —
+      # rust-api-test по нему сносит debug/llvm-cov-target, чтобы уложиться в 14 GB SSD.
+      CARGO_INCREMENTAL: "0"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      # uv сам ставит Python из .python-version кубика или requires-python его pyproject при make install.
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.20"
+
+      # rustup читает rust-toolchain.toml только вверх от cwd, не из подкаталогов.
+      - name: Install Rust toolchain
+        if: hashFiles('**/rust-toolchain.toml') != ''
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r -d '' manifest; do
+            found=1
+            dir=$(dirname -- "$manifest")
+            (cd -- "$dir" && rustup show active-toolchain)
+          done < <(git ls-files -z -- ':(glob)**/rust-toolchain.toml')
+          if [ "$found" -eq 0 ]; then
+            printf 'rust-toolchain.toml не найден в git\n' >&2
+            exit 1
+          fi
+
+      # package.json лежит в подкаталоге кубика. Все файлы вне node_modules должны
+      # задавать одну строку engines.node и один packageManager.
+      - name: Locate Node package.json
+        if: hashFiles('**/package.json') != ''
+        id: node-package
+        run: |
+          set -euo pipefail
+          package_file=$(bash .github/scripts/check_node_package_json.sh)
+          if [ -z "$package_file" ]; then
+            printf 'package.json вне node_modules не найден\n' >&2
+            exit 1
+          fi
+          printf 'package_file=%s\n' "$package_file" >> "$GITHUB_OUTPUT"
+
+      # Версия Node берётся из engines.node найденного package.json (22.22.0).
+      - name: Install Node
+        if: hashFiles('**/package.json') != ''
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: ${{ steps.node-package.outputs.package_file }}
+
+      # Версия pnpm берётся из packageManager найденного package.json (10.30.3).
+      - name: Install pnpm
+        if: hashFiles('**/package.json') != ''
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          package_json_file: ${{ steps.node-package.outputs.package_file }}
+
+      # Тот же make install, что и локально; compose-сервисы поднимают цели кубиков.
+      - name: Install dependencies
+        run: make install
+
+      # Тот же make full-check, что и локально; никаких отдельных pytest/cargo/pnpm-команд.
+      - name: Full check
+        run: make full-check
