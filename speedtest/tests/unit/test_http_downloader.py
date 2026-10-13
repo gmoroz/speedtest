@@ -88,6 +88,23 @@ def test_download_read_timeout_raises_request_timeout_error() -> None:
         downloader.download("https://example.test/slow")
 
 
+def test_download_connect_timeout_describes_all_timeout_stages() -> None:
+    """Таймаут соединения описывается без утверждения только о выдаче данных."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectTimeout("timed out", request=request)
+
+    with (
+        HttpDownloader(timeout_seconds=0.2, transport=httpx.MockTransport(handler)) as downloader,
+        pytest.raises(RequestTimeoutError) as raised,
+    ):
+        downloader.download("https://example.test/slow")
+
+    assert raised.value.message == (
+        "Таймаут 0.2 с при соединении, ожидании ответа или передаче данных для загрузки https://example.test/slow."
+    )
+
+
 def test_download_connect_error_raises_network_error() -> None:
     """ConnectError от транспорта преобразуется в сетевую ошибку."""
 

@@ -6,7 +6,7 @@ import pytest
 
 from speedtest.clients.http import HttpDownloader
 from speedtest.exceptions import EmptyResponseError, NetworkError, RequestTimeoutError, UnexpectedStatusError
-from tests.fixtures.http_server import HttpServer
+from tests.fixtures.http_server import IMAGE_PAYLOAD, HttpServer
 
 pytestmark = pytest.mark.integration
 
@@ -16,7 +16,7 @@ def test_download_image_from_local_server_returns_full_payload(http_server: Http
     with HttpDownloader(timeout_seconds=2.0) as downloader:
         sample = downloader.download(f"{http_server.base_url}/image.bin")
 
-    assert sample.size_bytes == len(http_server.image_payload)
+    assert sample.size_bytes == len(IMAGE_PAYLOAD)
 
 
 def test_download_missing_from_local_server_raises_status_error(http_server: HttpServer) -> None:
@@ -38,7 +38,7 @@ def test_download_redirect_from_local_server_returns_full_payload(http_server: H
     with HttpDownloader(timeout_seconds=2.0) as downloader:
         sample = downloader.download(f"{http_server.base_url}/redirect")
 
-    assert sample.size_bytes == len(http_server.image_payload)
+    assert sample.size_bytes == len(IMAGE_PAYLOAD)
 
 
 def test_download_slow_from_local_server_raises_request_timeout(http_server: HttpServer) -> None:

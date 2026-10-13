@@ -1,6 +1,7 @@
 """Командная строка замера скорости."""
 
 import argparse
+import os
 import sys
 from collections.abc import Sequence
 
@@ -11,7 +12,7 @@ from speedtest.clients.http import HttpDownloader
 from speedtest.config import Settings
 from speedtest.const import BYTES_PER_MEGABYTE, DEFAULT_REQUEST_COUNT
 from speedtest.enums import ExitCode
-from speedtest.exceptions import SpeedTestError
+from speedtest.exceptions import SpeedTestError, mask_url_userinfo
 from speedtest.models import DownloadSample
 from speedtest.services import SpeedTestService
 
@@ -60,7 +61,7 @@ def main(argv: Sequence[str] | None = None) -> ExitCode:
         with HttpDownloader(settings.timeout_seconds) as downloader:
             service = SpeedTestService(downloader)
             service.validate(args.url, request_count)
-            print(f"Замер скорости: {args.url}")
+            print(f"Замер скорости: {mask_url_userinfo(args.url)}")
             print(f"Запросов: {request_count}, последовательно")
             print()
 
@@ -73,19 +74,25 @@ def main(argv: Sequence[str] | None = None) -> ExitCode:
                 )
 
             report = service.run(args.url, request_count, on_sample=on_sample)
+
+            print()
+            print(f"Среднее время запроса: {report.average_seconds:.3f} с")
+            print(
+                f"Скачано: {report.total_bytes / BYTES_PER_MEGABYTE:.2f} МБ "
+                f"(в среднем {report.average_bytes / BYTES_PER_MEGABYTE:.2f} МБ за запрос)"
+            )
+            formatted_megabyte = f"{BYTES_PER_MEGABYTE:,}".replace(",", " ")
+            print(f"Скорость: {report.megabytes_per_second:.2f} МБ/с (1 МБ = {formatted_megabyte} байт)")
     except SpeedTestError as error:
         print(f"Ошибка: {error.message}", file=sys.stderr)
         return ExitCode.ERROR
     except KeyboardInterrupt:
         print("Прервано.", file=sys.stderr)
         return ExitCode.INTERRUPTED
+    except BrokenPipeError:
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, sys.stdout.fileno())
+        os.close(devnull)
+        return ExitCode.ERROR
 
-    print()
-    print(f"Среднее время запроса: {report.average_seconds:.3f} с")
-    print(
-        f"Скачано: {report.total_bytes / BYTES_PER_MEGABYTE:.2f} МБ "
-        f"(в среднем {report.average_bytes / BYTES_PER_MEGABYTE:.2f} МБ за запрос)"
-    )
-    formatted_megabyte = f"{BYTES_PER_MEGABYTE:,}".replace(",", " ")
-    print(f"Скорость: {report.megabytes_per_second:.2f} МБ/с (1 МБ = {formatted_megabyte} байт)")
     return ExitCode.OK

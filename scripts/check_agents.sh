@@ -17,7 +17,7 @@ while IFS= read -r -d '' agents_file; do
     while IFS= read -r quoted_path; do
         path="${quoted_path:1:-1}"
         case "$path" in
-            make|[[:alpha:]_][[:alnum:]_]*|*' '*|*'('*|*'='*|*'<'*|*'>'*) continue ;;
+            make|*' '*|*'('*|*'='*|*'<'*|*'>'*) continue ;;
         esac
         # Генерируемые пути в .gitignore отсутствуют в чистом checkout до генерации.
         if [ ! -e "$path" ] && ! git check-ignore -q "$path"; then

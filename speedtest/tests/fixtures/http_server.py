@@ -37,11 +37,6 @@ class HttpServer:
         """Возвращает максимум одновременно обрабатывавшихся запросов."""
         return self._state.max_concurrent_requests
 
-    @property
-    def image_payload(self) -> bytes:
-        """Возвращает эталонное тело маршрута image.bin."""
-        return IMAGE_PAYLOAD
-
 
 @pytest.fixture
 def http_server() -> Iterator[HttpServer]:

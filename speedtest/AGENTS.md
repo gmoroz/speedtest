@@ -14,7 +14,7 @@
 | `speedtest/src/speedtest/models` | неизменяемые доменные модели |
 | `speedtest/src/speedtest/exceptions.py` | общие ошибки для сервисов и клиентов |
 | `speedtest/src/speedtest/const.py` | константы |
-| `speedtest/src/speedtest/enums.py` | коды завершения CLI (`ExitCode`) |
+| `speedtest/src/speedtest/enums.py` | коды завершения CLI, enum ExitCode |
 | `speedtest/src/speedtest/config.py` | Settings из окружения и `.env` |
 
 Сервис принимает загрузчик через Protocol и не импортирует httpx; это проверяет import-linter.

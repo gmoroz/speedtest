@@ -2,6 +2,7 @@
 
 DEFAULT_REQUEST_COUNT = 10
 DEFAULT_TIMEOUT_SECONDS = 30.0
+MAX_TIMEOUT_SECONDS = 3600.0
 
 # Десятичный мегабайт (SI): так скорость сопоставима с цифрами провайдеров и speedtest-сервисов.
 BYTES_PER_MEGABYTE = 1_000_000

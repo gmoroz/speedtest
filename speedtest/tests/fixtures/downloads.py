@@ -26,3 +26,20 @@ class FakeDownloader(Downloader):
         if call_number in self._errors:
             raise self._errors[call_number]
         return self._samples[call_number - 1]
+
+
+class FakeHttpDownloader(FakeDownloader):
+    """Возвращает заданные сэмплы через интерфейс контекстного HTTP-клиента."""
+
+    def __enter__(self) -> FakeHttpDownloader:
+        """Возвращает фейковый клиент для контекстного менеджера."""
+        return self
+
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc_value: BaseException | None,
+        _traceback: object | None,
+    ) -> None:
+        """Завершает работу фейкового клиента."""
+        return None

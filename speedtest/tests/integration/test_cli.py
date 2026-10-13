@@ -9,6 +9,7 @@ import pytest
 
 from speedtest.cli import main
 from speedtest.clients.http import HttpDownloader
+from speedtest.enums import ExitCode
 from tests.fixtures.http_server import HttpServer
 
 pytestmark = pytest.mark.integration
@@ -115,3 +116,28 @@ def test_module_entrypoint_downloads_from_local_server(http_server: HttpServer, 
 
     assert completed.returncode == 0
     assert "Скорость:" in completed.stdout
+
+
+def test_main_when_stdout_pipe_closes_returns_error_code_without_traceback(
+    http_server: HttpServer, tmp_path: Path
+) -> None:
+    """Закрытие stdout-пайпа возвращает код ошибки без BrokenPipeError и traceback."""
+    process = subprocess.Popen(
+        [sys.executable, "-m", "speedtest", "-n", "2", f"{http_server.base_url}/slow"],
+        cwd=tmp_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    assert process.stdout is not None
+    assert process.stderr is not None
+
+    process.stdout.readline()
+    process.stdout.close()
+    return_code = process.wait(timeout=30)
+    stderr = process.stderr.read()
+    process.stderr.close()
+
+    assert return_code == ExitCode.ERROR
+    assert "BrokenPipeError" not in stderr
+    assert "Traceback" not in stderr

@@ -49,30 +49,25 @@ jobs:
             exit 1
           fi
 
-      # package.json лежит в подкаталоге кубика. Все файлы вне node_modules должны
-      # задавать одну строку engines.node и один packageManager.
+      # package.json кубика лежит в его подкаталоге. Скрипт пропускает npm-инструментарий
+      # core; отсутствие package.json кубика допустимо для стеков без Node.
       - name: Locate Node package.json
-        if: hashFiles('**/package.json') != ''
         id: node-package
         run: |
           set -euo pipefail
           package_file=$(bash .github/scripts/check_node_package_json.sh)
-          if [ -z "$package_file" ]; then
-            printf 'package.json вне node_modules не найден\n' >&2
-            exit 1
-          fi
           printf 'package_file=%s\n' "$package_file" >> "$GITHUB_OUTPUT"
 
-      # Версия Node берётся из engines.node найденного package.json (22.22.0).
+      # При наличии Node-кубика версия берётся из его engines.node.
       - name: Install Node
-        if: hashFiles('**/package.json') != ''
+        if: steps.node-package.outputs.package_file != ''
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version-file: ${{ steps.node-package.outputs.package_file }}
 
-      # Версия pnpm берётся из packageManager найденного package.json (10.30.3).
+      # При наличии Node-кубика версия pnpm берётся из его packageManager.
       - name: Install pnpm
-        if: hashFiles('**/package.json') != ''
+        if: steps.node-package.outputs.package_file != ''
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         with:
           package_json_file: ${{ steps.node-package.outputs.package_file }}

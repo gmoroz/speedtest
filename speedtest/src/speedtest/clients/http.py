@@ -46,10 +46,6 @@ class HttpDownloader:
         _traceback: TracebackType | None,
     ) -> None:
         """Закрывает HTTP-клиент при выходе из контекстного менеджера."""
-        self.close()
-
-    def close(self) -> None:
-        """Закрывает HTTP-клиент и его соединения."""
         self._client.close()
 
     def download(self, url: str) -> DownloadSample:
