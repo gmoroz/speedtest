@@ -1,0 +1,7 @@
+{
+  "name": "core-lint-tools",
+  "private": true,
+  "devDependencies": {
+    "jscpd": "5.3.3"
+  }
+}

@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# make pre-commit-check форматирует рабочее дерево, а коммит берёт индекс: правку форматера
+# добавляет автор, иначе в коммит уйдёт неотформатированная версия. Сравниваются хеши
+# незастейдженных файлов до и после.
+unstaged_snapshot() {
+    git diff --name-only -z | xargs -0 -r sha256sum -- | sort
+}
+
+before="$(unstaged_snapshot)"
+make pre-commit-check
+changed="$(comm -13 <(printf '%s\n' "$before") <(unstaged_snapshot) | cut -c 67-)"
+if [ -n "$changed" ]; then
+    printf 'pre-commit: форматер изменил файлы. Проверь git diff, добавь их через git add и повтори коммит:\n' >&2
+    printf '%s\n' "$changed" >&2
+    exit 1
+fi
