@@ -50,11 +50,11 @@ def http_server() -> Iterator[HttpServer]:
         protocol_version = "HTTP/1.1"
 
         def _send_body(self, status_code: int, body: bytes, content_type: str) -> None:
-            self.send_response(status_code)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
             with suppress(ConnectionError):
+                self.send_response(status_code)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
                 self.wfile.write(body)
 
         def do_GET(self) -> None:
@@ -66,10 +66,11 @@ def http_server() -> Iterator[HttpServer]:
 
             try:
                 if path == "/redirect":
-                    self.send_response(302)
-                    self.send_header("Location", "/image.bin")
-                    self.send_header("Content-Length", "0")
-                    self.end_headers()
+                    with suppress(ConnectionError):
+                        self.send_response(302)
+                        self.send_header("Location", "/image.bin")
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
                     return
 
                 if path == "/slow":

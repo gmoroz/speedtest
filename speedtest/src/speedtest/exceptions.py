@@ -1,5 +1,7 @@
 """Иерархия доменных ошибок замера. Общая для clients и services, поэтому вне слоёв."""
 
+import http
+
 
 def mask_url_userinfo(url: str) -> str:
     """Скрывает пароль из userinfo URL для вывода пользователю.
@@ -65,7 +67,10 @@ class UnexpectedStatusError(SpeedTestError):
     """Итоговый ответ (после редиректов) не 2xx."""
 
     def __init__(self, url: str, status_code: int) -> None:
-        super().__init__(f"Сервер вернул HTTP {status_code} для {mask_url_userinfo(url)}.")
+        message = f"Сервер вернул HTTP {status_code} для {mask_url_userinfo(url)}."
+        if status_code == http.HTTPStatus.TOO_MANY_REQUESTS:
+            message += " Сервер ограничил частоту запросов: нужен повтор позже или другой URL."
+        super().__init__(message)
 
 
 class EmptyResponseError(SpeedTestError):

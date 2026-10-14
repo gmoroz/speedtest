@@ -14,6 +14,7 @@ from speedtest.exceptions import (
     RequestTimeoutError,
     UnexpectedStatusError,
 )
+from tests.fixtures.transports import CloseTrackingTransport
 
 
 def test_download_success_with_user_agent_returns_size_and_elapsed() -> None:
@@ -168,8 +169,8 @@ def test_download_gzip_response_counts_compressed_bytes() -> None:
 
 
 def test_downloader_context_exit_closes_client() -> None:
-    """Выход из контекстного менеджера закрывает внутренний HTTP-клиент."""
-    transport = httpx.MockTransport(
+    """Выход из контекстного менеджера закрывает внедрённый HTTP-транспорт."""
+    transport = CloseTrackingTransport(
         lambda request: httpx.Response(200, stream=httpx.ByteStream(b"ok"), request=request)
     )
     downloader = HttpDownloader(timeout_seconds=1.0, transport=transport)
@@ -178,4 +179,4 @@ def test_downloader_context_exit_closes_client() -> None:
         assert active_downloader is downloader
         downloader.download("https://example.test/image.bin")
 
-    assert downloader._client.is_closed
+    assert transport.closed

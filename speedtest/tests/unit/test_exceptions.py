@@ -1,5 +1,7 @@
 """Юнит-тесты пользовательских сообщений ошибок."""
 
+from http import HTTPStatus
+
 import pytest
 
 from speedtest.exceptions import (
@@ -45,3 +47,20 @@ def test_error_messages_with_password_mask_url_userinfo(error: SpeedTestError) -
 def test_mask_url_userinfo_returns_safe_url_or_original_for_invalid_url(url: str, expected: str) -> None:
     """Маскировка скрывает userinfo и не падает на некорректном URL."""
     assert mask_url_userinfo(url) == expected
+
+
+def test_unexpected_status_429_suggests_retry_or_other_url() -> None:
+    """Ответ 429 объясняет ограничение частоты запросов и предлагает варианты."""
+    error = UnexpectedStatusError("https://example.test/image.bin", HTTPStatus.TOO_MANY_REQUESTS)
+
+    assert error.message == (
+        "Сервер вернул HTTP 429 для https://example.test/image.bin. "
+        "Сервер ограничил частоту запросов: нужен повтор позже или другой URL."
+    )
+
+
+def test_unexpected_status_404_keeps_original_message() -> None:
+    """Ответ 404 сохраняет исходное сообщение без подсказки для 429."""
+    error = UnexpectedStatusError("https://example.test/image.bin", HTTPStatus.NOT_FOUND)
+
+    assert error.message == "Сервер вернул HTTP 404 для https://example.test/image.bin."

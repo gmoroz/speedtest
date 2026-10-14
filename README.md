@@ -45,6 +45,9 @@ uv run python -m speedtest https://upload.wikimedia.org/wikipedia/commons/3/3f/F
 uv run speedtest --requests 3 https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg
 ```
 
+Wikimedia ограничивает частоту загрузок: при нескольких запусках подряд сервер может ответить `HTTP 429`, и замер
+остановится с подсказкой. Повтори позже или передай URL другого тяжёлого файла.
+
 Справка по аргументам:
 
 ```bash
